@@ -1,34 +1,29 @@
 #!/bin/sh
 
-uci set luci.main.lang=auto
-uci set system.@system[0].hostname=Gavin
-uci set system.@system[0].timezone=CST-8
-uci set system.@system[0].zonename=Asia/Shanghai
-uci commit luci
+uci -q get system.@imm_init[0] > "/dev/null" || uci -q add system imm_init > "/dev/null"
 
-uci set fstab.@global[0].anon_mount=1
-uci commit fstab
+if ! uci -q get system.@imm_init[0].lang > "/dev/null"; then
+	uci -q set luci.main.lang="auto"
+	uci -q commit luci
 
-rm -f /www/luci-static/resources/view/status/include/50_dsl.js
-rm -f /www/luci-static/resources/view/status/include/70_ddns.js
-rm -f /www/luci-static/resources/view/status/include/80_minidlna.js
-rm -f /www/luci-static/resources/view/status/include/80_upnp.js
+	uci -q set system.@imm_init[0].lang="1"
+	uci -q commit system
+fi
 
-ln -sf /sbin/ip /usr/bin/ip
+#if ! uci -q get system.@imm_init[0].anon_mount > "/dev/null"; then
+#	uci -q set fstab.@global[0].anon_mount="1"
+#	uci -q commit fstab
 
-#sed -i '/option disabled/d' /etc/config/wireless
-#sed -i '/set wireless.radio${devidx}.disabled/d' /lib/wifi/mac80211.sh
-wifi up
+#	uci -q set system.@imm_init[0].anon_mount="1"
+#	uci -q commit system
+#fi
 
-sed -i '/DISTRIB_REVISION/d' /etc/openwrt_release
-echo "DISTRIB_REVISION='v21.02.7'" >> /etc/openwrt_release
-sed -i '/DISTRIB_DESCRIPTION/d' /etc/openwrt_release
-echo "DISTRIB_DESCRIPTION='Gavin '" >> /etc/openwrt_release
+ln -sf "/sbin/ip" "/usr/bin/ip"
 
-sed -i '/log-facility/d' /etc/dnsmasq.conf
-echo 'log-facility=/dev/null' >> /etc/dnsmasq.conf
+sed -i "/log-facility/d" "/etc/dnsmasq.conf"
+echo "log-facility=/dev/null" >> "/etc/dnsmasq.conf"
 
-rm -rf /tmp/luci-modulecache/
-rm -f /tmp/luci-indexcache
+rm -rf "/tmp/luci-modulecache"
+rm -f "/tmp/luci-indexcache"
 
 exit 0
