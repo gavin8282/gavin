@@ -5,18 +5,22 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=gn
-PKG_RELEASE:=$(AUTORELEASE)
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://gn.googlesource.com/gn.git
-PKG_SOURCE_DATE:=2022-11-10
-PKG_SOURCE_VERSION:=1c4151ff5c1d6fbf7fa800b8d4bb34d3abc03a41
-PKG_MIRROR_HASH:=abbaae1c91ee6460cd1e21ca644e09ed189e68521edd462a9d9839cbb1aa6c3e
+PKG_SOURCE_DATE:=2023-04-05
+PKG_SOURCE_VERSION:=28b7b6c507eb808567e3aea446cd259f7691fddc
+PKG_MIRROR_HASH:=5b112442eabea4b906cc409237fac13b8efb4f5acb25989b1883d5ce96deebd2
 
 PKG_LICENSE:=BSD 3-Clause
 PKG_LICENSE_FILES:=LICENSE
 PKG_MAINTAINER:=Tianling Shen <cnsztl@immortalwrt.org>
 
+ifneq ($(wildcard $(TOPDIR)/feeds/packages/devel/ninja/ninja.mk),)
+PKG_BUILD_DEPENDS+= ninja/host
+endif
+PKG_HOST_ONLY:=1
 HOST_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
@@ -27,6 +31,7 @@ define Package/gn
   CATEGORY:=Development
   TITLE:=A meta-build system that generates build files for Ninja
   URL:=https://gn.googlesource.com/gn/
+  BUILDONLY:=1
 endef
 
 define Package/gn/description
@@ -36,12 +41,11 @@ endef
 
 define Host/Configure
 	$(PYTHON) $(HOST_BUILD_DIR)/build/gen.py \
-		--no-last-commit-position \
-		--no-static-libstdc++
+		--no-last-commit-position
 endef
 
 define Host/Compile
-	+$(NINJA) -C $(HOST_BUILD_DIR)/out
+	ninja -C $(HOST_BUILD_DIR)/out
 endef
 
 define Host/Install
