@@ -23,7 +23,7 @@ define Package/ipv6helper
 	SECTION:=ipv6
 	TITLE:=IPv6 Helper
 	DEPENDS:=+luci-proto-ipv6 +wget-ssl +libip6tc +ip6tables +ip6tables-mod-nat \
-		+kmod-ipt-nat6 +kmod-nf-nat6 +odhcpd-ipv6only +odhcp6c
+		+kmod-ipt-nat6 +kmod-nf-nat6 +odhcpd-ipv6only +odhcp6c +IPV6:kmod-nf-conntrack6 +IPV6:libip6tc
 	PKGARCH:=all
 endef
 
