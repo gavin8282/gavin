@@ -1,6 +1,9 @@
 #!/bin/sh
 
 uci set luci.main.lang=auto
+uci set system.@system[0].hostname=Gavin
+uci set system.@system[0].timezone=CST-8
+uci set system.@system[0].zonename=Asia/Shanghai
 uci commit luci
 
 uci set fstab.@global[0].anon_mount=1
