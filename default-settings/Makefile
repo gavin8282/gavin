@@ -4,7 +4,7 @@
 # Copyright (C) 2021 ImmortalWrt
 # <https://immortalwrt.org>
 #
-# This is free software, licensed under the GNU General Public License v3.
+# This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
 
@@ -22,6 +22,7 @@ define Package/default-settings
   SECTION:=luci
   CATEGORY:=LuCI
   TITLE:=LuCI support for Default Settings
+  DEPENDS:=+luci
   PKGARCH:=all
   DEPENDS:=+luci-lib-base
 endef
