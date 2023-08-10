@@ -3,7 +3,7 @@
 # Copyright (C) 2017-2020 Yousong Zhou <yszhou4tech@gmail.com>
 # Copyright (C) 2021-2023 ImmortalWrt.org
 
-include $(TOPDIR)/rules.mk
+include $(TOPDIR)/feeds/rules.mk
 
 PKG_NAME:=shadowsocks-rust
 PKG_VERSION:=1.15.3
