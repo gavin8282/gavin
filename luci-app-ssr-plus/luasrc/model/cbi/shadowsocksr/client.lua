@@ -97,7 +97,7 @@ o.default = 1
 
 o = s:option(Value, "tunnel_forward", translate("Anti-pollution DNS Server"))
 o:value("10.0.2.253:531", translate("G-Pi BYST DNS (10.0.2.253:531)"))
-o:value("10.0.2.252:531", translate("G-AP BYST DNS (10.0.2.252:531)"))
+o:value("10.0.2.250:531", translate("G-AP BYST DNS (10.0.2.250:531)"))
 o:value("127.0.0.1:531", translate("G-OP BYST DNS (127.0.0.1:531)"))
 o:value("8.8.4.4:53", translate("Google Public DNS (8.8.4.4)"))
 o:value("8.8.8.8:53", translate("Google Public DNS (8.8.8.8)"))
