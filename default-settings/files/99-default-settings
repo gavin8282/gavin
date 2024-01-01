@@ -28,7 +28,7 @@ uci -q commit luci
 sed -i '/DISTRIB_REVISION/d' /etc/openwrt_release
 echo "DISTRIB_REVISION='v21.02.7'" >> /etc/openwrt_release
 sed -i '/DISTRIB_DESCRIPTION/d' /etc/openwrt_release
-echo "DISTRIB_DESCRIPTION='Gavin v21.02.7'" >> /etc/openwrt_release
+echo "DISTRIB_DESCRIPTION='Gavin v21.02.7 Dragon'" >> /etc/openwrt_release
 
 ln -sf "/sbin/ip" "/usr/bin/ip"
 
