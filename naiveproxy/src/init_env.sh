@@ -40,7 +40,7 @@ export naive_flags="
 is_official_build=true
 exclude_unwind_tables=true
 enable_resource_allowlist_generation=false
-symbol_level=1
+symbol_level=0
 is_clang=true
 use_sysroot=false
 
@@ -55,6 +55,7 @@ use_gio=false
 use_gtk=false
 use_platform_icu_alternatives=true
 use_glib=false
+enable_js_protobuf=false
 
 disable_file_support=true
 enable_websockets=false
@@ -63,6 +64,10 @@ enable_mdns=false
 enable_reporting=false
 include_transport_security_state_preload_list=false
 use_nss_certs=false
+enable_device_bound_sessions=false
+
+enable_backup_ref_ptr_support=false
+enable_dangling_raw_ptr_checks=false
 
 target_os=\"openwrt\"
 target_cpu=\"${naive_arch}\"
@@ -82,12 +87,22 @@ case "${target_arch}" in
 	else
 		naive_flags+=" arm_float_abi=\"soft\" arm_use_neon=false"
 	fi
+
+	# LLVM does not accept muslgnueabi as the target triple environment
+	if [ -d "$toolchain_dir/lib/gcc/arm-openwrt-linux-muslgnueabi" ] && [ ! -d "$toolchain_dir/lib/gcc/arm-openwrt-linux-musleabi" ]; then
+		ln -sf "$toolchain_dir/lib/gcc/arm-openwrt-linux-muslgnueabi" "$toolchain_dir/lib/gcc/arm-openwrt-linux-musleabi"
+	fi
 	;;
 "arm64")
 	[ -n "${cpu_type}" ] && naive_flags+=" arm_cpu=\"${cpu_type}\""
 	;;
 "mipsel"|"mips64el")
-	naive_flags+=" use_thin_lto=false chrome_pgo_phase=0 mips_arch_variant=\"r2\""
+	naive_flags+=" use_thin_lto=false chrome_pgo_phase=0"
+	if [ -z "${cpu_type}" ] || [ "${cpu_type}" == "mips32" ]; then
+		naive_flags+=" mips_arch_variant=\"r1\""
+	else
+		naive_flags+=" mips_arch_variant=\"r2\""
+	fi
 	if [ "${target_arch}" == "mipsel" ]; then
 		if [ "${cpu_subtype}" == "24kf" ]; then
 			naive_flags+=" mips_float_abi=\"hard\""
@@ -95,5 +110,8 @@ case "${target_arch}" in
 			naive_flags+=" mips_float_abi=\"soft\""
 		fi
 	fi
+	;;
+"x86_64")
+	naive_flags+=" use_cfi_icall=false"
 	;;
 esac

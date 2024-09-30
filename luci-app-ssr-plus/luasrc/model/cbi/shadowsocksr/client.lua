@@ -87,6 +87,10 @@ o.default = gfw
 o = s:option(ListValue, "dports", translate("Proxy Ports"))
 o:value("1", translate("All Ports"))
 o:value("2", translate("Only Common Ports"))
+o:value("3", translate("Custom Ports"))
+cp = s:option(Value, "custom_ports", translate("Enter Custom Ports"))
+cp:depends("dports", "3")  -- 仅当用户选择“Custom Ports”时显示
+cp.placeholder = "e.g., 80,443,8080"
 o.default = 1
 
 o = s:option(ListValue, "pdnsd_enable", translate("Resolve Dns Mode"))
@@ -99,8 +103,6 @@ o:value("0", translate("Use Local DNS Service listen port 5335"))
 o.default = 1
 
 o = s:option(Value, "tunnel_forward", translate("Anti-pollution DNS Server"))
-o:value("10.0.2.253:531", translate("BYST-Pi DNS (10.0.2.253:531)"))
-o:value("127.0.0.1:531", translate("BYST-Local DNS (127.0.0.1:531)"))
 o:value("8.8.4.4:53", translate("Google Public DNS (8.8.4.4)"))
 o:value("8.8.8.8:53", translate("Google Public DNS (8.8.8.8)"))
 o:value("208.67.222.222:53", translate("OpenDNS (208.67.222.222)"))
