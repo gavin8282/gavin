@@ -1,0 +1,28 @@
+name: Update GFW Rules
+
+on:
+  schedule:
+    - cron: "0 1 * * *"   # 每天凌晨1点跑一次
+  workflow_dispatch:       # 可手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y wget curl
+
+      - name: Build gfw.conf
+        run: |
+          bash build-gfw.sh
+
+      - name: Commit and push
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add gfw.conf
+          git commit -m "Auto update gfw.conf at $(date '+%F %T')" || echo "No changes"
+          git push
