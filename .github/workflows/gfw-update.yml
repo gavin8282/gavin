@@ -25,16 +25,13 @@ jobs:
       - name: Check for file changes (ignore first line)
         id: git-check
         run: |
-          # 核心逻辑：
-          # 使用 diff 命令直接比较新旧文件的内容（从第二行开始）。
-          # `git show HEAD:gfw.conf` 获取上一次commit中的文件内容。
-          # `2>/dev/null` 用于防止在文件首次创建时因找不到旧文件而报错。
-          # `!` 将 diff 的退出码反转，因此只有当文件内容有差异时，if 条件才成立。
           if ! diff -q <(tail -n +2 gfw.conf) <(git show HEAD:gfw.conf 2>/dev/null | tail -n +2); then
-            echo "Rule changes detected (ignoring header). Proceeding to commit."
+            # 使用 ::notice:: 创建一个醒目的日志标注
+            echo "::notice::Rule changes detected (ignoring header). Proceeding to commit."
             echo "changes=true" >> $GITHUB_OUTPUT
           else
-            echo "No rule changes detected (ignoring header). Skipping commit."
+            # 使用 ::notice:: 创建一个醒目的日志标注
+            echo "::notice::No rule changes detected (ignoring header). Skipping commit."
             echo "changes=false" >> $GITHUB_OUTPUT
           fi
 
@@ -47,3 +44,15 @@ jobs:
           git add gfw.conf
           git commit -m "Auto update gfw.conf at $(date '+%F %T')"
           git push
+
+      # 新增！第六步：任务总结，此步骤总是会执行
+      - name: Job Summary
+        # 使用 always() 确保无论前面的步骤是否被跳过，此步骤都会运行
+        if: always()
+        run: |
+          # 根据 git-check 步骤的输出结果，打印不同的总结信息
+          if [[ ${{ steps.git-check.outputs.changes }} == 'true' ]]; then
+            echo "✅ 本次运行完成：检测到规则更新，并已成功推送到仓库。"
+          else
+            echo "☑️ 本次运行完成：规则列表无变化，未执行任何推送操作。"
+          fi
