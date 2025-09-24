@@ -1,0 +1,63 @@
+name: Update GFW Rules
+
+on:
+  schedule:
+    - cron: "0 */2 * * *"   # 每2小时运行一次（UTC时间）
+  workflow_dispatch:       # 允许手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y wget
+
+      - name: Build gfw.conf
+        run: bash build-gfw.sh
+
+      - name: Check for file changes (ignore first line)
+        id: git-check
+        run: |
+          if ! diff -q <(tail -n +2 gfw.conf) <(git show HEAD:gfw.conf 2>/dev/null | tail -n +2); then
+            echo "::notice::Rule changes detected (ignoring header). Proceeding to commit."
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "::notice::No rule changes detected (ignoring header). Skipping commit."
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push if changed
+        id: push_step
+        if: steps.git-check.outputs.changes == 'true'
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add gfw.conf
+          git commit -m "Auto update gfw.conf at $(date '+%F %T')"
+          git push
+
+      # === 修改后的通知步骤 ===
+      - name: Notify clients to update
+        if: steps.push_step.outcome == 'success'
+        run: |
+          echo "Notifying OpenWrt device..."
+          curl -X POST \
+            -H "X-Hub-Signature: ${{ secrets.OPENWRT_WEBHOOK_SECRET }}" \
+            "${{ secrets.OPENWRT_WEBHOOK_URL }}"
+            
+          echo "Notifying Ubuntu device..."
+          curl -X POST \
+            -H "X-Hook-Secret: ${{ secrets.UBUNTU_WEBHOOK_SECRET }}" \
+            "${{ secrets.UBUNTU_WEBHOOK_URL }}"
+
+      - name: Job Summary
+        if: always()
+        run: |
+          if [[ ${{ steps.git-check.outputs.changes }} == 'true' ]]; then
+            echo "✅ 本次运行完成：检测到规则更新，并已成功推送到客户端。"
+          else
+            echo "☑️ 本次运行完成：规则列表无变化，未执行任何推送操作。"
+          fi
