@@ -76,12 +76,12 @@ jobs:
         run: |
           echo "Notifying OpenWrt device..."
           curl -X POST \
-            -H "X-Hub-Secret: ${{ secrets.OPENWRT_WEBHOOK_SECRET }}" \
+            -H "X-Hub-Signature: ${{ secrets.OPENWRT_WEBHOOK_SECRET }}" \
             "${{ secrets.OPENWRT_WEBHOOK_URL }}"
             
           echo "Notifying Ubuntu device..."
           curl -X POST \
-            -H "X-Hook-Secret: ${{ secrets.UBUNTU_WEBHOOK_SECRET }}" \
+            -H "X-Hook-Signature: ${{ secrets.UBUNTU_WEBHOOK_SECRET }}" \
             "${{ secrets.UBUNTU_WEBHOOK_URL }}"
 
       - name: Job Summary
