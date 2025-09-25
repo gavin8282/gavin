@@ -76,7 +76,7 @@ jobs:
         run: |
           echo "Notifying OpenWrt device..."
           curl -X POST \
-            -H "X-Hub-Signature: ${{ secrets.OPENWRT_WEBHOOK_SECRET }}" \
+            -H "X-Hub-Secret: ${{ secrets.OPENWRT_WEBHOOK_SECRET }}" \
             "${{ secrets.OPENWRT_WEBHOOK_URL }}"
             
           echo "Notifying Ubuntu device..."
