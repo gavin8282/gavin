@@ -1,4 +1,4 @@
-name: Update SmartDNS Rules（GFW+AD）
+name: Update SmartDNS Rules（GFW+AD）-grok
 
 on:
   schedule:
