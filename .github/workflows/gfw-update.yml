@@ -2,7 +2,7 @@ name: Update GFW Rules
 
 on:
   schedule:
-    - cron: "0 */2 * * *"   # 每2个小时（UTC时间）跑一次
+#    - cron: "0 */2 * * *"   # 每2个小时（UTC时间）跑一次
   workflow_dispatch:       # 允许手动触发
 
 jobs:
