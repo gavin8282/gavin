@@ -7,6 +7,9 @@ on:
 
 jobs:
   build:
+    # ↓↓↓ 在这里添加权限设置 ↓↓↓
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -18,46 +21,46 @@ jobs:
       - name: Build gfw.conf
         run: bash build-gfw.sh
 
-      - name: Check and download ad rules
-        id: ad-check
-        run: |
-          # 广告规则文件及URL
-          BLACKLIST="anti-ad-for-smartdns.conf"
-          WHITELIST="anti-ad-white-for-smartdns.conf"
-          BLACKLIST_URL="https://anti-ad.net/anti-ad-for-smartdns.conf"
-          WHITELIST_URL="https://raw.githubusercontent.com/privacy-protection-tools/dead-horse/master/anti-ad-white-for-smartdns.txt"
-          
-          # 下载广告黑名单并检查是否更新
-          wget -q -O "$BLACKLIST" "$BLACKLIST_URL"
-          if ! diff -q "$BLACKLIST" <(git show HEAD:"$BLACKLIST" 2>/dev/null); then
-            echo "::notice::广告黑名单有更新."
-            echo "ad_changes=true" >> $GITHUB_OUTPUT
-          fi
-          
-          # 下载广告白名单并检查是否更新
-          wget -q -O "$WHITELIST" "$WHITELIST_URL"
-          if ! diff -q "$WHITELIST" <(git show HEAD:"$WHITELIST" 2>/dev/null); then
-            echo "::notice::广告白名单有更新."
-            echo "ad_changes=true" >> $GITHUB_OUTPUT
-          fi
-          
       - name: Check for all file changes
         id: git-check
         run: |
-          # 检查 gfw.conf 是否有变化
-          gfw_changes=false
-          if ! diff -q <(tail -n +2 gfw.conf) <(git show HEAD:gfw.conf 2>/dev/null | tail -n +2); then
-            gfw_changes=true
+          # 定义文件名
+          GFW_FILE="gfw.conf"
+          AD_BLACKLIST="anti-ad-for-smartdns.conf"
+          AD_WHITELIST="anti-ad-white-for-smartdns.conf"
+          
+          # 定义远程URL
+          AD_BLACKLIST_URL="https://anti-ad.net/anti-ad-for-smartdns.conf"
+          AD_WHITELIST_URL="https://raw.githubusercontent.com/privacy-protection-tools/dead-horse/master/anti-ad-white-for-smartdns.txt"
+
+          # 初始化变更标记
+          HAS_CHANGES=false
+          
+          # 1. 检查 GFW 规则
+          if ! diff -q <(tail -n +2 "$GFW_FILE") <(git show HEAD:"$GFW_FILE" 2>/dev/null | tail -n +2); then
+            echo "::notice::GFW 规则有更新."
+            HAS_CHANGES=true
           fi
           
-          # 从上一步获取广告规则的更新状态
-          ad_changes="${{ steps.ad-check.outputs.ad_changes }}"
+          # 2. 检查广告黑名单
+          wget -q -O "$AD_BLACKLIST" "$AD_BLACKLIST_URL"
+          if ! diff -q "$AD_BLACKLIST" <(git show HEAD:"$AD_BLACKLIST" 2>/dev/null); then
+            echo "::notice::广告黑名单有更新."
+            HAS_CHANGES=true
+          fi
+
+          # 3. 检查广告白名单
+          wget -q -O "$AD_WHITELIST" "$AD_WHITELIST_URL"
+          if ! diff -q "$AD_WHITELIST" <(git show HEAD:"$AD_WHITELIST" 2>/dev/null); then
+            echo "::notice::广告白名单有更新."
+            HAS_CHANGES=true
+          fi
           
-          if [ "$gfw_changes" == 'true' ] || [ "$ad_changes" == 'true' ]; then
-            echo "::notice::检测到规则更新 (包括 GFW 或广告规则). 正在进行提交."
+          # 根据最终标记设置输出
+          if [ "$HAS_CHANGES" == "true" ]; then
             echo "changes=true" >> $GITHUB_OUTPUT
           else
-            echo "::notice::没有规则更新. 跳过提交."
+            echo "::notice::所有规则均无更新，跳过提交。"
             echo "changes=false" >> $GITHUB_OUTPUT
           fi
 
@@ -68,27 +71,30 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git add gfw.conf anti-ad-for-smartdns.conf anti-ad-white-for-smartdns.conf
-          git commit -m "Auto update all SmartDNS rules at $(date '+%F %T')"
+          # 只提交有变动的文件，避免空提交
+          git commit -m "Auto update SmartDNS rules at $(date '+%F %T')"
           git push
 
       - name: Notify clients to update
         if: steps.push_step.outcome == 'success'
         run: |
           echo "Notifying OpenWrt device..."
-          curl -X POST \
-            -H "X-Hub-Secret: ${{ secrets.OPENWRT_WEBHOOK_SECRET }}" \
+          curl --fail --connect-timeout 10 --max-time 30 -X POST \
+            -H "X-Hook-Secret: ${{ secrets.OPENWRT_WEBHOOK_SECRET }}" \
+            -H "Content-Length: 0" \ # <--- 为 OpenWrt 添加此行
             "${{ secrets.OPENWRT_WEBHOOK_URL }}"
             
           echo "Notifying Ubuntu device..."
-          curl -X POST \
-            -H "X-Hook-Secret: ${{ secrets.UBUNTU_WEBHOOK_SECRET }}" \
+          curl --fail --connect-timeout 10 --max-time 30 -X POST \
+            -H "X-Hook-Secret: ${{ secrets.UBUNRU_WEBHOOK_SECRET }}" \
+            -H "Content-Length: 0" \ # <--- 为 Ubuntu 添加此行
             "${{ secrets.UBUNTU_WEBHOOK_URL }}"
 
       - name: Job Summary
         if: always()
         run: |
           if [[ ${{ steps.git-check.outputs.changes }} == 'true' ]]; then
-            echo "✅ 本次运行完成：检测到规则更新，并已成功推送到客户端。"
+            echo "✅ 本次运行完成：检测到规则更新，并已成功推送到仓库和客户端。"
           else
             echo "☑️ 本次运行完成：规则列表无变化，未执行任何推送操作。"
           fi
